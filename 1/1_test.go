@@ -2,6 +2,46 @@ package main
 
 import "testing"
 
+func TestSolve(t *testing.T) {
+
+	t.Run("pt1", func(t *testing.T) {
+		testCases := []struct {
+			input []int
+			want  int
+		}{
+			{
+				input: []int{12, 14, 1969, 100756},
+				want:  2 + 2 + 654 + 33583,
+			},
+		}
+
+		for _, tc := range testCases {
+			if got, want := solve(tc.input, 1), tc.want; got != want {
+				t.Fatalf("solve(%v) = %d, want %d", tc.input, got, want)
+			}
+		}
+	})
+
+	t.Run("pt2", func(t *testing.T) {
+		testCases := []struct {
+			input []int
+			want  int
+		}{
+			{
+				input: []int{14, 1969, 100756},
+				want:  2 + 966 + 50346,
+			},
+		}
+
+		for _, tc := range testCases {
+			if got, want := solve(tc.input, 2), tc.want; got != want {
+				t.Fatalf("solve(%v) = %d, want %d", tc.input, got, want)
+			}
+		}
+	})
+
+}
+
 func TestCalcFuel(t *testing.T) {
 
 	testCases := []struct {
@@ -22,21 +62,20 @@ func TestCalcFuel(t *testing.T) {
 
 }
 
-func TestSolve(t *testing.T) {
+func TestCalcFuelRecursively(t *testing.T) {
 
 	testCases := []struct {
-		input []int
-		want  int
+		mass     int
+		wantFuel int
 	}{
-		{
-			input: []int{12, 14, 1969, 100756},
-			want:  2 + 2 + 654 + 33583,
-		},
+		{14, 2},
+		{1969, 966},
+		{100756, 50346},
 	}
 
 	for _, tc := range testCases {
-		if got, want := solve(tc.input), tc.want; got != want {
-			t.Fatalf("solve(%v) = %d, want %d", tc.input, got, want)
+		if got, want := calcFuelRecursively(tc.mass), tc.wantFuel; got != want {
+			t.Fatalf("calcFuel(%d) = %d, want %d", tc.mass, got, want)
 		}
 	}
 
