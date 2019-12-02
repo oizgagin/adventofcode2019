@@ -31,6 +31,9 @@ func solve(memory map[int]int, part int) int {
 	if part == 1 {
 		return solve1(memory)
 	}
+	if part == 2 {
+		return solve2(memory)
+	}
 	panic(fmt.Sprintf("unexpected part %d", part))
 }
 
@@ -39,6 +42,33 @@ func solve1(memory map[int]int) int {
 	memory[2] = 2
 	exec(memory)
 	return memory[0]
+}
+
+const (
+	wantPt2 = 19690720
+)
+
+func solve2(memory map[int]int) int {
+	for i := 0; i < 100; i++ {
+		for j := 0; j < 100; j++ {
+			m := copyMem(memory)
+			m[1], m[2] = i, j
+			exec(m)
+
+			if m[0] == wantPt2 {
+				return i*100 + j
+			}
+		}
+	}
+	return 0
+}
+
+func copyMem(memory map[int]int) map[int]int {
+	m := make(map[int]int, len(memory))
+	for k, v := range memory {
+		m[k] = v
+	}
+	return m
 }
 
 const (
