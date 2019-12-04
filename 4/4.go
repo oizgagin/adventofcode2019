@@ -16,10 +16,10 @@ var (
 )
 
 func init() {
-	flag.Parse()
 }
 
 func main() {
+	flag.Parse()
 	fmt.Printf("task #4, part #%d, solution: %d", *part, solve(*filename, *part))
 }
 
@@ -87,23 +87,19 @@ func solve2(filename string) int {
 
 	valids := 0
 	for i := start; i <= end; i++ {
-		if isValid(i) {
+		if isValid2(i) {
 			valids++
 		}
 	}
 	return valids
 }
 
-func solve2(filename string) int {
-	return 0
-}
-
-func isValid(i int) bool {
+func isValid(n int) bool {
 	dups, decreasing := false, true
 
-	prev := i % 10
-	for i /= 10; i > 0; i /= 10 {
-		curr := i % 10
+	prev := n % 10
+	for n /= 10; n > 0; n /= 10 {
+		curr := n % 10
 		if curr == prev {
 			dups = true
 		}
@@ -113,6 +109,28 @@ func isValid(i int) bool {
 		prev = curr
 	}
 	return decreasing && dups
+}
+
+func isValid2(n int) bool {
+	count, dups := 0, false
+
+	prev, count := n%10, 1
+	for n /= 10; n > 0; n /= 10 {
+		curr := n % 10
+		if curr == prev {
+			count++
+		} else {
+			if count%2 == 0 {
+				dups = true
+			}
+			count = 1
+		}
+		if prev < curr {
+			return false
+		}
+		prev = curr
+	}
+	return dups
 }
 
 func readline(filename string) (string, error) {

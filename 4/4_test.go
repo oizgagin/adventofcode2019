@@ -22,3 +22,21 @@ func TestIsValid(t *testing.T) {
 		}
 	}
 }
+
+func TestIsValid2(t *testing.T) {
+
+	testCases := []struct {
+		n    int
+		want bool
+	}{
+		{112233, true},
+		{123444, false},
+		{111122, true},
+	}
+
+	for _, tc := range testCases {
+		if got := isValid2(tc.n); got != tc.want {
+			t.Fatalf("isValid2(%d) = %v, want %v", tc.n, got, tc.want)
+		}
+	}
+}
