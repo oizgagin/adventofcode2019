@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -19,169 +20,221 @@ func init() {
 }
 
 func main() {
-	paths, err := readPaths(*filename)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Printf("PART #%d, SOLUTION: %d\n", *part, solve(paths, *part))
+	fmt.Printf("task #3, part #%d, solution: %d", *part, solve(*filename, *part))
 }
 
-func readPaths(filename string) ([]*Path, error) {
-	content, err := ioutil.ReadFile(filename)
+func solve(filename string, part int) int {
+	lines, err := readlines(filename)
 	if err != nil {
-		return nil, fmt.Errorf("ioutil.Readfile(%q) = %v", filename, err)
+		log.Fatalf("%v: readlines: %v", filename, err)
 	}
-	var paths []*Path
-	for _, line := range strings.Split(string(content), "\n") {
-		if len(line) > 0 {
-			paths = append(paths, unmarshalPath(line))
-		}
+	if len(lines) != 2 {
+		log.Fatalf("%v: want 2 lines, got %v", filename, len(lines))
 	}
-	return paths, nil
-}
 
-func solve(paths []*Path, part int) int {
+	p1, p2 := parsePath(lines[0]), parsePath(lines[1])
+
 	if part == 1 {
-		return solve1(paths)
+		return solve1(p1, p2)
 	}
+	if part == 2 {
+		return solve2(p1, p2)
+	}
+
+	log.Fatalf("invalid part: %d", part)
 	return 0
 }
 
-func solve1(paths []*Path) int {
-	p1, p2 := paths[0], paths[1]
+func solve1(p1, p2 []point) int {
+	min := 0
 
-	var crosses []*Point
-	for _, seg1 := range p1.Segments {
-		for _, seg2 := range p2.Segments {
-			if cross, ok := seg1.Cross(seg2); ok {
-				crosses = append(crosses, cross)
+	for i := 0; i+1 < len(p1); i++ {
+		for j := 0; j+1 < len(p2); j++ {
+			if p, ok := cross(p1[i], p1[i+1], p2[j], p2[j+1]); ok && (min == 0 || absPoint(p) < min) {
+				min = absPoint(p)
 			}
 		}
 	}
 
-	minAbs := 0
-	for _, cross := range crosses {
-		if minAbs == 0 || cross.abs() < minAbs {
-			minAbs = cross.abs()
+	return min
+}
+
+func solve2(p1, p2 []point) int {
+	min := 0
+
+	d1, d2 := distances(p1), distances(p2)
+
+	for i := 0; i+1 < len(p1); i++ {
+		for j := 0; j+1 < len(p2); j++ {
+			if cross, ok := cross(p1[i], p1[i+1], p2[j], p2[j+1]); ok {
+				if d := d1[p1[i]] + d2[p2[j]] + absPoint(subPoints(cross, p1[i])) + absPoint(subPoints(cross, p2[j])); min == 0 || d < min {
+					min = d
+				}
+			}
 		}
 	}
-	return minAbs
+
+	return min
 }
 
-type Point struct {
-	X, Y int
-}
-
-func makePoint(x, y int) *Point {
-	return &Point{X: x, Y: y}
-}
-
-func addPoint(a, b *Point) *Point {
-	return &Point{
-		X: a.X + b.X,
-		Y: a.Y + b.Y,
-	}
-}
-
-func (p *Point) String() string {
-	return fmt.Sprintf("(%d, %d)", p.X, p.Y)
-}
-
-func (p *Point) abs() int {
-	return abs(p.X) + abs(p.Y)
-}
-
-func abs(x int) int {
-	if x < 0 {
-		return -x
-	}
-	return x
-}
-
-type Segment struct {
-	A, B *Point
-}
-
-func makeSegment(x1, y1, x2, y2 int) *Segment {
-	return &Segment{
-		A: makePoint(x1, y1),
-		B: makePoint(x2, y2),
-	}
-}
-
-func (s *Segment) String() string {
-	return fmt.Sprintf("%s-%s", s.A, s.B)
-}
-
-func (s *Segment) IsVertical() bool {
-	return s.A.X == s.B.X
-}
-
-func (s *Segment) IsHorizontal() bool {
-	return s.A.Y == s.B.Y
-}
-
-func (s *Segment) Cross(other *Segment) (*Point, bool) {
-	if s.IsHorizontal() && other.IsHorizontal() {
-		return nil, false
-	}
-	if s.IsVertical() && other.IsVertical() {
-		return nil, false
+func distances(p []point) map[point]int {
+	if len(p) == 0 {
+		return nil
 	}
 
-	var h, v *Segment
-	if s.IsHorizontal() {
-		h, v = s, other
+	d := make(map[point]int)
+
+	d[p[0]] = absPoint(p[0])
+	for i := 1; i < len(p); i++ {
+		if _, has := d[p[i]]; !has {
+			d[p[i]] = d[p[i-1]] + absPoint(subPoints(p[i], p[i-1]))
+		}
+	}
+	return d
+}
+
+func absPoint(p point) int {
+	return abs(p.x) + abs(p.y)
+}
+
+func abs(i int) int {
+	if i < 0 {
+		return -i
+	}
+	return i
+}
+
+func readlines(filename string) ([]string, error) {
+	f, err := os.Open(filename)
+	if err != nil {
+		return nil, fmt.Errorf("os.Open: %v", err)
+	}
+	defer f.Close()
+
+	content, err := ioutil.ReadAll(f)
+	if err != nil {
+		return nil, fmt.Errorf("ioutil.ReadAll: %v", err)
+	}
+
+	lines := strings.Split(string(content), "\n")
+
+	res := lines[:0]
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if len(line) != 0 {
+			res = append(res, line)
+		}
+	}
+
+	return res, nil
+}
+
+type point struct {
+	x, y int
+}
+
+func parsePath(s string) []point {
+	segments := strings.Split(s, ",")
+
+	var path []point
+
+	p := point{0, 0}
+	path = append(path, p)
+
+	for _, seg := range segments {
+		p = sumPoints(p, seg2offset(seg))
+		path = append(path, p)
+	}
+
+	return path
+}
+
+func subPoints(p1, p2 point) point {
+	return point{p1.x - p2.x, p1.y - p2.y}
+}
+
+func sumPoints(p1, p2 point) point {
+	return point{p1.x + p2.x, p1.y + p2.y}
+}
+
+func cross(a1, b1, a2, b2 point) (point, bool) {
+	vertical := func(a, b point) bool {
+		return a.x == b.x
+	}
+
+	horizontal := func(a, b point) bool {
+		return a.y == b.y
+	}
+
+	if vertical(a1, b1) && vertical(a2, b2) {
+		return point{}, false
+	}
+
+	if horizontal(a1, b1) && horizontal(a2, b2) {
+		return point{}, false
+	}
+
+	var ha, hb point
+	if horizontal(a1, b1) {
+		ha, hb = a1, b1
 	} else {
-		h, v = other, s
+		ha, hb = a2, b2
 	}
 
-	if !in(h.A.X, h.B.X, v.A.X) {
-		return nil, false
-	}
-	if !in(v.A.Y, v.B.Y, h.A.Y) {
-		return nil, false
+	var va, vb point
+	if vertical(a1, b1) {
+		va, vb = a1, b1
+	} else {
+		va, vb = a2, b2
 	}
 
-	return &Point{X: v.A.X, Y: h.A.Y}, true
+	if in(ha.x, hb.x, va.x) && in(va.y, vb.y, ha.y) {
+		return point{va.x, ha.y}, true
+	}
+
+	return point{}, false
 }
 
 func in(a, b, c int) bool {
-	return (a <= c && c <= b || b <= c && c <= a)
+	if a > b {
+		a, b = b, a
+	}
+	return a <= c && c <= b
 }
 
-type Path struct {
-	Segments []*Segment
+var validDirections = map[byte]bool{
+	'L': true,
+	'R': true,
+	'U': true,
+	'D': true,
 }
 
-func unmarshalPath(path string) *Path {
-	parts := strings.Split(path, ",")
-
-	var segments []*Segment
-
-	p := makePoint(0, 0)
-	for _, part := range parts {
-		p2 := addPoint(p, pointFromPathPart(part))
-		segments = append(segments, &Segment{A: p, B: p2})
-		p = p2
+func seg2offset(seg string) point {
+	if len(seg) < 2 {
+		log.Fatalf("invalid segment: %v", seg)
 	}
 
-	return &Path{Segments: segments}
-}
+	direction := seg[0]
+	if !validDirections[direction] {
+		log.Fatalf("invalid direction: %v", direction)
+	}
 
-func pointFromPathPart(part string) *Point {
-	direction := part[0]
-	offset, _ := strconv.Atoi(part[1:])
+	offset, err := strconv.Atoi(seg[1:])
+	if err != nil {
+		log.Fatalf("invalid offset: %v", seg[1:])
+	}
 
 	switch direction {
 	case 'L':
-		return &Point{-offset, 0}
+		return point{-offset, 0}
 	case 'R':
-		return &Point{offset, 0}
+		return point{offset, 0}
 	case 'U':
-		return &Point{0, offset}
+		return point{0, offset}
 	case 'D':
-		return &Point{0, -offset}
+		return point{0, -offset}
 	}
-	panic(fmt.Sprintf("invalid part: %q", part))
+
+	log.Fatalf("unexpected direction: %v", direction)
+	return point{}
 }
