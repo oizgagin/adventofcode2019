@@ -41,35 +41,91 @@ func (cpu *CPU) LoadMemory(mem Memory) {
 	cpu.mem = mem
 }
 
+type Opcode int
+
 const (
-	OpCodeAdd  = 1
-	OpCodeMul  = 2
-	OpCodeHalt = 99
+	OpcodeAdd    Opcode = 1
+	OpcodeMul    Opcode = 2
+	OpcodeInput  Opcode = 3
+	OpcodeOutput Opcode = 4
+	OpcodeHalt   Opcode = 99
 )
 
-func (cpu *CPU) Exec() {
-	opcode := cpu.mem[cpu.ip]
-	for opcode != OpCodeHalt {
-		switch opcode {
-		case OpCodeAdd:
-			cpu.execAdd()
-		case OpCodeMul:
-			cpu.execMul()
+var OpcodeLens = map[Opcode]int{
+	OpcodeAdd:    4,
+	OpcodeMul:    4,
+	OpcodeHalt:   1,
+	OpcodeInput:  2,
+	OpcodeOutput: 2,
+}
+
+type ParamMode int
+
+const (
+	ModePosition  ParamMode = 0
+	ModeImmediate ParamMode = 1
+)
+
+func (cpu *CPU) Exec(input <-chan int, output chan<- int) {
+	for {
+		opcode, modes := ParseOpcode(cpu.mem[cpu.ip])
+		if opcode == OpcodeHalt {
+			return
 		}
 
-		cpu.ip += 4
-		opcode = cpu.mem[cpu.ip]
+		switch opcode {
+		case OpcodeAdd:
+			cpu.execAdd(modes)
+		case OpcodeMul:
+			cpu.execMul(modes)
+		case OpcodeInput:
+			cpu.execInput(modes, input)
+		case OpcodeOutput:
+			cpu.execOutput(modes, output)
+		}
+
+		cpu.ip += OpcodeLens[opcode]
 	}
 }
 
-func (cpu *CPU) execAdd() {
-	in1, in2, out1 := cpu.mem[cpu.ip+1], cpu.mem[cpu.ip+2], cpu.mem[cpu.ip+3]
-	cpu.mem[out1] = cpu.mem[in1] + cpu.mem[in2]
+func ParseOpcode(v int) (opcode Opcode, modes []ParamMode) {
+	opcode = Opcode(v % 100)
+	v /= 100
+
+	total := OpcodeLens[opcode] - 1
+
+	modes = make([]ParamMode, total)
+	for i := 0; i < total; i++ {
+		modes[i] = ParamMode(v % 10)
+		v /= 10
+	}
+	return
 }
 
-func (cpu *CPU) execMul() {
-	in1, in2, out1 := cpu.mem[cpu.ip+1], cpu.mem[cpu.ip+2], cpu.mem[cpu.ip+3]
-	cpu.mem[out1] = cpu.mem[in1] * cpu.mem[in2]
+func (cpu *CPU) getParam(v int, mode ParamMode) int {
+	if mode == ModeImmediate {
+		return v
+	}
+	return cpu.mem[v]
+}
+
+func (cpu *CPU) execAdd(modes []ParamMode) {
+	in1, in2, out := cpu.getParam(cpu.mem[cpu.ip+1], modes[0]), cpu.getParam(cpu.mem[cpu.ip+2], modes[1]), cpu.mem[cpu.ip+3]
+	cpu.mem[out] = in1 + in2
+}
+
+func (cpu *CPU) execMul(modes []ParamMode) {
+	in1, in2, out := cpu.getParam(cpu.mem[cpu.ip+1], modes[0]), cpu.getParam(cpu.mem[cpu.ip+2], modes[1]), cpu.mem[cpu.ip+3]
+	cpu.mem[out] = in1 * in2
+}
+
+func (cpu *CPU) execInput(modes []ParamMode, input <-chan int) {
+	out := cpu.mem[cpu.ip+1]
+	cpu.mem[out] = <-input
+}
+
+func (cpu *CPU) execOutput(modes []ParamMode, output chan<- int) {
+	output <- cpu.getParam(cpu.mem[cpu.ip+1], modes[0])
 }
 
 func (cpu *CPU) Memory() Memory {
