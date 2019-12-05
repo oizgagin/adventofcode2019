@@ -112,7 +112,7 @@ func isValid(n int) bool {
 }
 
 func isValid2(n int) bool {
-	count, dups := 0, false
+	dups := false
 
 	prev, count := n%10, 1
 	for n /= 10; n > 0; n /= 10 {
@@ -120,7 +120,7 @@ func isValid2(n int) bool {
 		if curr == prev {
 			count++
 		} else {
-			if count%2 == 0 {
+			if count == 2 {
 				dups = true
 			}
 			count = 1
@@ -129,6 +129,9 @@ func isValid2(n int) bool {
 			return false
 		}
 		prev = curr
+	}
+	if count == 2 {
+		return true
 	}
 	return dups
 }
