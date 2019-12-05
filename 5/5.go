@@ -59,8 +59,29 @@ func solve1(mem string) (output int) {
 	return
 }
 
-func solve2(mem string) int {
-	return 0
+func solve2(mem string) (output int) {
+	cpu := intcode.NewCPU()
+	cpu.LoadMemory(intcode.NewMemoryFromString(mem))
+
+	inputs := make(chan int)
+	go func() {
+		inputs <- 5
+		close(inputs)
+	}()
+
+	collected, outputs := make(chan struct{}), make(chan int)
+	go func() {
+		defer close(collected)
+		for elem := range outputs {
+			output = elem
+		}
+	}()
+
+	cpu.Exec(inputs, outputs)
+
+	<-collected
+
+	return
 }
 
 func readline(filename string) (string, error) {
