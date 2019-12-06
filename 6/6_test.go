@@ -27,17 +27,17 @@ func TestParsemap(t *testing.T) {
 			},
 			want: map[string][]string{
 				"COM": []string{"B"},
-				"B":   []string{"C", "G"},
-				"C":   []string{"D"},
-				"D":   []string{"E", "I"},
-				"E":   []string{"F", "J"},
-				"F":   nil,
-				"G":   []string{"H"},
-				"H":   nil,
-				"I":   nil,
-				"J":   []string{"K"},
-				"K":   []string{"L"},
-				"L":   nil,
+				"B":   []string{"COM", "C", "G"},
+				"C":   []string{"B", "D"},
+				"D":   []string{"C", "E", "I"},
+				"E":   []string{"D", "F", "J"},
+				"F":   []string{"E"},
+				"G":   []string{"B", "H"},
+				"H":   []string{"G"},
+				"I":   []string{"D"},
+				"J":   []string{"E", "K"},
+				"K":   []string{"J", "L"},
+				"L":   []string{"K"},
 			},
 		},
 	}
@@ -76,6 +76,40 @@ func TestCountOrbits(t *testing.T) {
 
 	for _, tc := range testCases {
 		if got := countOrbits(parsemap(tc.m)); !reflect.DeepEqual(got, tc.want) {
+			t.Fatalf("got %v, want %v", got, tc.want)
+		}
+	}
+
+}
+
+func TestFindMinDistance(t *testing.T) {
+
+	testCases := []struct {
+		m    []string
+		want int
+	}{
+		{
+			m: []string{
+				"COM)B",
+				"B)C",
+				"C)D",
+				"D)E",
+				"E)F",
+				"B)G",
+				"G)H",
+				"D)I",
+				"E)J",
+				"J)K",
+				"K)L",
+				"I)SAN",
+				"K)YOU",
+			},
+			want: 4,
+		},
+	}
+
+	for _, tc := range testCases {
+		if got := findMinDistance(parsemap(tc.m), "YOU", "SAN"); !reflect.DeepEqual(got, tc.want) {
 			t.Fatalf("got %v, want %v", got, tc.want)
 		}
 	}
