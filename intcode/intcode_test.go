@@ -59,59 +59,13 @@ func TestIntcode_Exec(t *testing.T) {
 			close(inputs)
 		}()
 
-		outputs, collectOutputs := outputs()
-
-		cpu.Exec(inputs, outputs)
+		outputs := cpu.Exec(inputs)
 
 		if got := cpu.Memory().String(); tc.want != "" && got != tc.want {
 			t.Fatalf("got %v, want %v", got, tc.want)
 		}
-
-		if tc.wantOutputs != nil {
-			if outputs := collectOutputs(); !reflect.DeepEqual(outputs, tc.wantOutputs) {
-				t.Fatalf("got %v outputs, want %v", outputs, tc.wantOutputs)
-			}
-		}
-	}
-
-}
-
-func outputs() (chan int, func() []int) {
-	outsCh, outs := make(chan int), make([]int, 0)
-
-	started := make(chan struct{})
-	finished := make(chan struct{})
-
-	go func() {
-		close(started)
-		defer close(finished)
-
-		for out := range outsCh {
-			outs = append(outs, out)
-		}
-	}()
-
-	<-started
-
-	return outsCh, func() []int {
-		<-finished
-		return outs
-	}
-}
-
-func TestIntcode_ParseOpcode(t *testing.T) {
-
-	testCases := []struct {
-		v          int
-		wantOpcode intcode.Opcode
-		wantModes  []intcode.ParamMode
-	}{
-		{1002, intcode.OpcodeMul, []intcode.ParamMode{intcode.ModePosition, intcode.ModeImmediate, intcode.ModePosition}},
-	}
-
-	for _, tc := range testCases {
-		if gotOpcode, gotModes := intcode.ParseOpcode(tc.v); gotOpcode != tc.wantOpcode || !reflect.DeepEqual(gotModes, tc.wantModes) {
-			t.Fatalf("ParseOpcode(%d) = (%v, %v), want (%v, %v)", tc.v, gotOpcode, gotModes, tc.wantOpcode, tc.wantModes)
+		if got := outputs; !reflect.DeepEqual(got, tc.wantOutputs) {
+			t.Fatalf("got %v outputs, want %v", outputs, tc.wantOutputs)
 		}
 	}
 
