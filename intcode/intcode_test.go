@@ -56,10 +56,10 @@ func TestIntcode_Exec(t *testing.T) {
 			for _, input := range tc.inputs {
 				inputs <- input
 			}
-			close(inputs)
 		}()
 
-		outputs := cpu.Exec(inputs)
+		var outputs []int
+		cpu.Exec(func() int { return <-inputs }, func(out int) { outputs = append(outputs, out) })
 
 		if got := cpu.Memory().String(); tc.want != "" && got != tc.want {
 			t.Fatalf("got %v, want %v", got, tc.want)

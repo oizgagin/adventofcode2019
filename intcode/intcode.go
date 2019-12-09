@@ -100,11 +100,9 @@ func (modes ParamModes) Get(i int) ParamMode {
 	return ParamMode(m % 10)
 }
 
-func (cpu *CPU) Exec(input <-chan int) (outputs []int) {
+func (cpu *CPU) Exec(input func() int, output func(int)) {
 	for {
-		opcode, modes := parseOpcode(cpu.mem[cpu.ip])
-
-		switch opcode {
+		switch opcode, modes := parseOpcode(cpu.mem.Get(cpu.ip)); opcode {
 		case OpcodeAdd:
 			cpu.execAdd(modes)
 		case OpcodeMul:
@@ -112,7 +110,7 @@ func (cpu *CPU) Exec(input <-chan int) (outputs []int) {
 		case OpcodeInput:
 			cpu.execInput(modes, input)
 		case OpcodeOutput:
-			outputs = append(outputs, cpu.execOutput(modes))
+			output(cpu.execOutput(modes))
 		case OpcodeJt:
 			cpu.execJt(modes)
 		case OpcodeJf:
@@ -147,9 +145,9 @@ func (cpu *CPU) execMul(modes ParamModes) {
 	cpu.ip += 4
 }
 
-func (cpu *CPU) execInput(modes ParamModes, input <-chan int) {
+func (cpu *CPU) execInput(modes ParamModes, input func() int) {
 	out := cpu.param(cpu.ip+1, ModeImmediate)
-	cpu.mem.Set(out, <-input)
+	cpu.mem.Set(out, input())
 	cpu.ip += 2
 }
 
