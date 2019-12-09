@@ -22,10 +22,8 @@ func parse(lines []string) (interface{}, error) {
 func solve1(mem interface{}) int {
 	amplifiers := 5
 
-	phases := common.Permutations(amplifiers)
-
-	maxSignal := 0
-	for _, phase := range phases {
+	max := 0
+	for _, phase := range common.Permutations(amplifiers) {
 		cpus := make([]*intcode.CPU, amplifiers)
 		for i := 0; i < amplifiers; i++ {
 			cpus[i] = intcode.NewCPU()
@@ -38,20 +36,38 @@ func solve1(mem interface{}) int {
 			in <- phase[i]
 			in <- input
 
-			outputs := cpus[i].Exec(in)
-			input = outputs[0]
+			cpus[i].Exec(func() int { return <-in }, func(out int) { input = out })
 		}
 
-		if input > maxSignal {
-			maxSignal = input
+		if input > max {
+			max = input
 		}
 	}
-
-	return maxSignal
+	return max
 }
 
 func solve2(mem interface{}) int {
-	cpu := intcode.NewCPU()
-	cpu.LoadMemory(mem.(intcode.Memory))
-	return 0
+	amplifiers := 5
+
+	max := 0
+	for _, _ = range common.Permutations(amplifiers) {
+		var (
+			cpus = make([]*intcode.CPU, amplifiers)
+		)
+		for i := 0; i < amplifiers; i++ {
+			cpus[i] = intcode.NewCPU()
+			cpus[i].LoadMemory(mem.(intcode.Memory))
+
+			/*
+				in := func() int {
+
+				}
+
+				out := func(int) {
+
+				}
+			*/
+		}
+	}
+	return max
 }
