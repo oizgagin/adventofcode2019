@@ -43,6 +43,7 @@ func solve1(v interface{}) int {
 				twos++
 			}
 		}
+
 		if zeroes < min || min == 0 {
 			min = zeroes
 			result = ones * twos
@@ -53,5 +54,65 @@ func solve1(v interface{}) int {
 }
 
 func solve2(v interface{}) int {
+	line := strings.TrimSpace(v.(string))
+
+	const (
+		width     = 25
+		height    = 6
+		layersize = width * height
+	)
+
+	type color rune
+
+	const (
+		black       color = '0'
+		white       color = '1'
+		transparent color = '2'
+	)
+
+	merge := func(base, c color) color {
+		if base == transparent {
+			return c
+		}
+		return base
+	}
+
+	image := make([][]color, height)
+	for i := 0; i < height; i++ {
+		image[i] = make([]color, width)
+	}
+
+	layers := len(line) / layersize
+
+	for i := 0; i < height; i++ {
+		for j := 0; j < width; j++ {
+			pixel := transparent
+			for k := 0; k < layers; k++ {
+				pixel = merge(pixel, color(line[k*layersize+i*width+j]))
+			}
+			image[i][j] = pixel
+		}
+	}
+
+	printlayer := func(image [][]color, height, width int) {
+		fmt.Printf("[")
+		for i := 0; i < height; i++ {
+			if i == 0 {
+				fmt.Printf("[")
+			} else {
+				fmt.Printf(" [")
+			}
+			for j := 0; j < width; j++ {
+				fmt.Printf(" %s", string(image[i][j]))
+			}
+			fmt.Printf("]")
+			if i == height-1 {
+				fmt.Printf("]")
+			}
+			fmt.Printf("\n")
+		}
+	}
+
+	printlayer(image, height, width)
 	return 0
 }
