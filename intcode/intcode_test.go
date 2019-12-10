@@ -46,11 +46,6 @@ func TestIntcode_Exec(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		mem := intcode.NewMemoryFromString(tc.mem)
-
-		cpu := intcode.NewCPU()
-		cpu.LoadMemory(mem)
-
 		inputs := make(chan int)
 		go func() {
 			for _, input := range tc.inputs {
@@ -59,7 +54,19 @@ func TestIntcode_Exec(t *testing.T) {
 		}()
 
 		var outputs []int
-		cpu.Exec(func() int { return <-inputs }, func(out int) { outputs = append(outputs, out) })
+
+		cpu := intcode.NewCPU(
+			intcode.NewMemoryFromString(tc.mem),
+			func() int { return <-inputs },
+			func(out int) { outputs = append(outputs, out) },
+		)
+
+		for {
+			state := cpu.Exec()
+			if state == intcode.CPUHalt {
+				break
+			}
+		}
 
 		if got := cpu.Memory().String(); tc.want != "" && got != tc.want {
 			t.Fatalf("got %v, want %v", got, tc.want)

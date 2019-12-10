@@ -37,17 +37,23 @@ func (mem Memory) Set(pos, value int) {
 	mem[pos] = value
 }
 
+func (mem Memory) Copy() Memory {
+	m := NewMemory()
+	for addr, value := range mem {
+		m[addr] = value
+	}
+	return m
+}
+
 type CPU struct {
-	ip  int
-	mem Memory
+	ip     int
+	mem    Memory
+	input  func() int
+	output func(int)
 }
 
-func NewCPU() *CPU {
-	return &CPU{ip: 0}
-}
-
-func (cpu *CPU) LoadMemory(mem Memory) {
-	cpu.mem = mem
+func NewCPU(mem Memory, input func() int, output func(int)) *CPU {
+	return &CPU{ip: 0, mem: mem, input: input, output: output}
 }
 
 func (cpu *CPU) Memory() Memory {
@@ -100,7 +106,14 @@ func (modes ParamModes) Get(i int) ParamMode {
 	return ParamMode(m % 10)
 }
 
-func (cpu *CPU) Exec(input func() int, output func(int)) {
+type CPUState string
+
+const (
+	CPUHalt    CPUState = "HALT"
+	CPUSuspend CPUState = "SUSPEND"
+)
+
+func (cpu *CPU) Exec() CPUState {
 	for {
 		switch opcode, modes := parseOpcode(cpu.mem.Get(cpu.ip)); opcode {
 		case OpcodeAdd:
@@ -108,9 +121,10 @@ func (cpu *CPU) Exec(input func() int, output func(int)) {
 		case OpcodeMul:
 			cpu.execMul(modes)
 		case OpcodeInput:
-			cpu.execInput(modes, input)
+			cpu.execInput(modes)
 		case OpcodeOutput:
-			output(cpu.execOutput(modes))
+			cpu.execOutput(modes)
+			return CPUSuspend
 		case OpcodeJt:
 			cpu.execJt(modes)
 		case OpcodeJf:
@@ -120,7 +134,7 @@ func (cpu *CPU) Exec(input func() int, output func(int)) {
 		case OpcodeEq:
 			cpu.execEq(modes)
 		case OpcodeHalt:
-			return
+			return CPUHalt
 		}
 	}
 }
@@ -145,16 +159,16 @@ func (cpu *CPU) execMul(modes ParamModes) {
 	cpu.ip += 4
 }
 
-func (cpu *CPU) execInput(modes ParamModes, input func() int) {
+func (cpu *CPU) execInput(modes ParamModes) {
 	out := cpu.param(cpu.ip+1, ModeImmediate)
-	cpu.mem.Set(out, input())
+	cpu.mem.Set(out, cpu.input())
 	cpu.ip += 2
 }
 
-func (cpu *CPU) execOutput(modes ParamModes) int {
-	output := cpu.param(cpu.ip+1, modes.Get(0))
+func (cpu *CPU) execOutput(modes ParamModes) {
+	outval := cpu.param(cpu.ip+1, modes.Get(0))
+	cpu.output(outval)
 	cpu.ip += 2
-	return output
 }
 
 func (cpu *CPU) execJt(modes ParamModes) {
