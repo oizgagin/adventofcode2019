@@ -25,7 +25,6 @@ func solve1(v interface{}) int {
 	cpu := intcode.NewCPU(v.(intcode.Memory), func() int { return 1 }, func(out int) { output = out })
 	for {
 		state := cpu.Exec()
-		fmt.Println(output)
 
 		if state == intcode.CPUHalt {
 			break
@@ -36,5 +35,16 @@ func solve1(v interface{}) int {
 }
 
 func solve2(v interface{}) int {
-	return 0
+	output := 0
+
+	cpu := intcode.NewCPU(v.(intcode.Memory), func() int { return 2 }, func(out int) { output = out })
+	for {
+		state := cpu.Exec()
+
+		if state == intcode.CPUHalt {
+			break
+		}
+	}
+
+	return output
 }
