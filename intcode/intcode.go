@@ -151,6 +151,9 @@ func (cpu *CPU) execAdd(modes ParamModes) {
 		in2 = cpu.param(cpu.ip+2, modes.Get(1))
 		out = cpu.param(cpu.ip+3, ModeImmediate)
 	)
+	if modes.Get(2) == ModeRelative {
+		out += cpu.base
+	}
 	cpu.mem.Set(out, in1+in2)
 	cpu.ip += 4
 }
@@ -161,12 +164,18 @@ func (cpu *CPU) execMul(modes ParamModes) {
 		in2 = cpu.param(cpu.ip+2, modes.Get(1))
 		out = cpu.param(cpu.ip+3, ModeImmediate)
 	)
+	if modes.Get(2) == ModeRelative {
+		out += cpu.base
+	}
 	cpu.mem.Set(out, in1*in2)
 	cpu.ip += 4
 }
 
 func (cpu *CPU) execInput(modes ParamModes) {
 	out := cpu.param(cpu.ip+1, ModeImmediate)
+	if modes.Get(0) == ModeRelative {
+		out += cpu.base
+	}
 	cpu.mem.Set(out, cpu.input())
 	cpu.ip += 2
 }
@@ -207,6 +216,9 @@ func (cpu *CPU) execLt(modes ParamModes) {
 		in2  = cpu.param(cpu.ip+2, modes.Get(1))
 		addr = cpu.param(cpu.ip+3, ModeImmediate)
 	)
+	if modes.Get(2) == ModeRelative {
+		addr += cpu.base
+	}
 	if in1 < in2 {
 		cpu.mem.Set(addr, 1)
 	} else {
@@ -221,6 +233,9 @@ func (cpu *CPU) execEq(modes ParamModes) {
 		in2  = cpu.param(cpu.ip+2, modes.Get(1))
 		addr = cpu.param(cpu.ip+3, ModeImmediate)
 	)
+	if modes.Get(2) == ModeRelative {
+		addr += cpu.base
+	}
 	if in1 == in2 {
 		cpu.mem.Set(addr, 1)
 	} else {
