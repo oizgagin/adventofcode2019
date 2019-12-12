@@ -64,30 +64,30 @@ func (cpu *CPU) Memory() Memory {
 type Opcode int
 
 const (
-	OpcodeAdd       Opcode = 1
-	OpcodeMul       Opcode = 2
-	OpcodeInput     Opcode = 3
-	OpcodeOutput    Opcode = 4
-	OpcodeJt        Opcode = 5
-	OpcodeJf        Opcode = 6
-	OpcodeLt        Opcode = 7
-	OpcodeEq        Opcode = 8
-	OpcodeAdjustRel Opcode = 9
-	OpcodeHalt      Opcode = 99
+	OpcodeAdd        Opcode = 1
+	OpcodeMul        Opcode = 2
+	OpcodeInput      Opcode = 3
+	OpcodeOutput     Opcode = 4
+	OpcodeJt         Opcode = 5
+	OpcodeJf         Opcode = 6
+	OpcodeLt         Opcode = 7
+	OpcodeEq         Opcode = 8
+	OpcodeAdjustBase Opcode = 9
+	OpcodeHalt       Opcode = 99
 )
 
 func (opcode Opcode) String() string {
 	strings := map[Opcode]string{
-		OpcodeAdd:       "ADD",
-		OpcodeMul:       "MUL",
-		OpcodeInput:     "INPUT",
-		OpcodeOutput:    "OUTPUT",
-		OpcodeJt:        "JT",
-		OpcodeJf:        "JF",
-		OpcodeLt:        "LT",
-		OpcodeEq:        "EQ",
-		OpcodeAdjustRel: "ADJUSTREL",
-		OpcodeHalt:      "HALT",
+		OpcodeAdd:        "ADD",
+		OpcodeMul:        "MUL",
+		OpcodeInput:      "INPUT",
+		OpcodeOutput:     "OUTPUT",
+		OpcodeJt:         "JT",
+		OpcodeJf:         "JF",
+		OpcodeLt:         "LT",
+		OpcodeEq:         "EQ",
+		OpcodeAdjustBase: "ADJUSTBASE",
+		OpcodeHalt:       "HALT",
 	}
 	return strings[opcode]
 }
@@ -137,8 +137,8 @@ func (cpu *CPU) Exec() CPUState {
 			cpu.execLt(modes)
 		case OpcodeEq:
 			cpu.execEq(modes)
-		case OpcodeAdjustRel:
-			cpu.execAdjustRel(modes)
+		case OpcodeAdjustBase:
+			cpu.execAdjustBase(modes)
 		case OpcodeHalt:
 			return CPUHalt
 		}
@@ -244,7 +244,7 @@ func (cpu *CPU) execEq(modes ParamModes) {
 	cpu.ip += 4
 }
 
-func (cpu *CPU) execAdjustRel(modes ParamModes) {
+func (cpu *CPU) execAdjustBase(modes ParamModes) {
 	incr := cpu.param(cpu.ip+1, modes.Get(0))
 	cpu.base += incr
 	cpu.ip += 2
