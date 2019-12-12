@@ -7,14 +7,14 @@ import (
 
 type Solver struct {
 	parse  func([]string) (interface{}, error)
-	solve1 func(interface{}) int
-	solve2 func(interface{}) int
+	solve1 func(interface{}) interface{}
+	solve2 func(interface{}) interface{}
 }
 
 func NewSolver(
 	parse func([]string) (interface{}, error),
-	solve1 func(interface{}) int,
-	solve2 func(interface{}) int,
+	solve1 func(interface{}) interface{},
+	solve2 func(interface{}) interface{},
 ) *Solver {
 	return &Solver{
 		parse:  parse,
@@ -23,7 +23,7 @@ func NewSolver(
 	}
 }
 
-func (solver *Solver) Solve() int {
+func (solver *Solver) Solve() interface{} {
 	filename := flag.String("filename", "input", "input file")
 	part := flag.Int("part", 1, "part no")
 
@@ -47,6 +47,6 @@ func (solver *Solver) Solve() int {
 		return solver.solve2(v)
 	}
 
-	log.Fatalf("invalid part: %d", part)
+	log.Fatalf("invalid part: %d", *part)
 	return 0
 }
