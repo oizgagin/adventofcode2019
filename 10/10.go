@@ -60,6 +60,7 @@ func solve1(v interface{}) interface{} {
 	max := 0
 
 	for _, p := range m.points {
+		fmt.Println("POINT", p)
 		ps := make([]point, len(m.points)-1)
 		copy(ps, m.points)
 
@@ -76,7 +77,8 @@ func solve1(v interface{}) interface{} {
 				continue
 			}
 
-			fmt.Println(p, neigh)
+			fmt.Println("\t", neigh, "IS VISIBLE")
+
 			visible++
 
 			dx, dy := neigh.x-p.x, neigh.y-p.y
@@ -97,6 +99,7 @@ func solve1(v interface{}) interface{} {
 					continue
 				}
 				if (dx == 0 && ddx == 0 || ddx%dx == 0) && (dy == 0 && ddy == 0 || ddy%dy == 0) {
+					fmt.Println("\t\t", ps[j], "IS BLOCKED BY", neigh)
 					blocked[ps[j]] = true
 				}
 			}
