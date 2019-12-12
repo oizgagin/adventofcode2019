@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/oizgagin/adventofcode2019/common"
@@ -12,56 +13,90 @@ func main() {
 	fmt.Println(solver.Solve())
 }
 
-func parse(lines []string) (interface{}, error) {
-	var m [][]int
+type point struct {
+	x, y int
+}
 
-	i := 0
+type pointsmap struct {
+	points        []point
+	width, height int
+}
+
+func parse(lines []string) (interface{}, error) {
+	m := pointsmap{}
+
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 		if len(line) == 0 {
 			continue
 		}
 
-		m = append(m, make([]int, len(line)))
+		m.width = len(line)
 		for j := 0; j < len(line); j++ {
-			if line[j] == '.' {
-				m[i][j] = 0
-			} else if line[j] == '#' {
-				m[i][j] = 1
-			} else {
-				return nil, fmt.Errorf("unexpected symbol: %v", line[j])
+			if line[j] == '#' {
+				m.points = append(m.points, point{x: j, y: m.height})
 			}
 		}
-
-		i++
+		m.height++
 	}
-
 	return m, nil
 }
 
-func solve1(v interface{}) int {
-	m := v.([][]int)
+func solve1(v interface{}) interface{} {
+	m := v.(pointsmap)
+
+	abs := func(p1, p2 point) int {
+		return (p1.x-p2.x)*(p1.x-p2.x) + (p1.y-p2.y)*(p1.y-p2.y)
+	}
+
+	eq := func(a, b point) bool {
+		return a.x == b.x && a.y == b.y
+	}
+
+	sign := func(x, y int) bool {
+		return (x <= 0 && y <= 0) || (x > 0 && y > 0)
+	}
 
 	max := 0
-	for i := 0; i < len(m); i++ {
-		for j := 0; j < len(m[i]); j++ {
-			if m[i][j] == 0 {
+
+	for _, p := range m.points {
+		ps := make([]point, len(m.points)-1)
+		copy(ps, m.points)
+
+		blocked := make(map[point]bool)
+		visible := 0
+
+		sort.Slice(ps, func(i, j int) bool { return abs(p, ps[i]) < abs(p, ps[j]) })
+
+		for i, neigh := range ps {
+			if eq(p, neigh) {
 				continue
 			}
-			if detected := search(m, i, j); max == 0 || detected > max {
-				max = detected
+			if blocked[neigh] {
+				continue
+			}
+
+			visible++
+
+			dx, dy := neigh.x-p.x, neigh.y-p.y
+
+			for j := i + 1; j < len(ps); j++ {
+				ddx, ddy := ps[j].x-p.x, ps[j].y-p.y
+
+				if (dx == 0 && ddx == 0 || ddx%dx == 0) && (ddy == 0 && dy == 0 || ddy%dy == 0) && sign(ddx, dx) && sign(ddy, dy) {
+					blocked[ps[j]] = true
+				}
 			}
 		}
+
+		if visible > max {
+			max = visible
+		}
 	}
+
 	return max
 }
 
-func search(m [][]int, i, j int) int {
-	return 0
-}
-
-func solve2(v interface{}) int {
-	m := v.([][]int)
-	fmt.Println(m)
+func solve2(v interface{}) interface{} {
 	return 0
 }
