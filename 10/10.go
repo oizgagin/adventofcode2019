@@ -64,7 +64,7 @@ func solve1(v interface{}) interface{} {
 		copy(ps, m.points)
 
 		blocked := make(map[point]bool)
-		visible := 0
+		visible := 1
 
 		sort.Slice(ps, func(i, j int) bool { return abs(p, ps[i]) < abs(p, ps[j]) })
 
@@ -76,6 +76,7 @@ func solve1(v interface{}) interface{} {
 				continue
 			}
 
+			fmt.Println(p, neigh)
 			visible++
 
 			dx, dy := neigh.x-p.x, neigh.y-p.y
@@ -83,7 +84,19 @@ func solve1(v interface{}) interface{} {
 			for j := i + 1; j < len(ps); j++ {
 				ddx, ddy := ps[j].x-p.x, ps[j].y-p.y
 
-				if (dx == 0 && ddx == 0 || ddx%dx == 0) && (ddy == 0 && dy == 0 || ddy%dy == 0) && sign(ddx, dx) && sign(ddy, dy) {
+				if !sign(dx, ddx) {
+					continue
+				}
+				if !sign(dy, ddy) {
+					continue
+				}
+				if dx == 0 && ddx != 0 || dx != 0 && ddx == 0 {
+					continue
+				}
+				if dy == 0 && ddy != 0 || dy != 0 && ddy == 0 {
+					continue
+				}
+				if (dx == 0 && ddx == 0 || ddx%dx == 0) && (dy == 0 && ddy == 0 || ddy%dy == 0) {
 					blocked[ps[j]] = true
 				}
 			}
