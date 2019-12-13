@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/oizgagin/adventofcode2019/common"
 	"github.com/oizgagin/adventofcode2019/intcode"
@@ -58,10 +59,8 @@ func (grid Grid) Set(x, y int, color Color) {
 	grid[x][y] = color
 }
 
-/*
 func (grid Grid) String() string {
-	minX, maxX, minY, maxY := 0, 0, 0, 0
-
+	minX, minY, maxX, maxY := 0, 0, 0, 0
 	for x := range grid {
 		if x < minX {
 			minX = x
@@ -79,22 +78,20 @@ func (grid Grid) String() string {
 		}
 	}
 
-	var rows []string
-	for i := maxY; i >= minY; i-- {
-		row := ""
-		for j := minX; j <= maxX; j++ {
-			if grid.Get(i, j) == Black {
-				row += " ."
+	ss := []string{}
+	for y := minY; y <= maxY; y++ {
+		s := ""
+		for x := minX; x <= maxX; x++ {
+			if grid.Get(x, y) == Black {
+				s += " ."
 			} else {
-				row += " #"
+				s += " #"
 			}
 		}
-		rows = append(rows, row)
+		ss = append(ss, s)
 	}
-
-	return strings.Join(rows, "\n")
+	return strings.Join(ss, "\n")
 }
-*/
 
 func solve1(v interface{}) interface{} {
 	var (
@@ -260,16 +257,5 @@ func solve2(v interface{}) interface{} {
 		}
 	}
 
-	for y := 0; y <= 10; y++ {
-		for x := 0; x <= 42; x++ {
-			if grid.Get(x, y) == Black {
-				fmt.Printf(" .")
-			} else {
-				fmt.Printf(" #")
-			}
-		}
-		fmt.Printf("\n")
-	}
-
-	return 0
+	return grid.String()
 }
