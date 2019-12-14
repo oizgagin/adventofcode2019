@@ -26,7 +26,7 @@ const (
 	WallTile       Tile = 1
 	BlockTile      Tile = 2
 	HorizontalTile Tile = 3
-	BallTile            = 4
+	BallTile       Tile = 4
 )
 
 type Grid map[int]map[int]Tile
@@ -54,7 +54,6 @@ func (grid Grid) Set(x, y int, tile Tile) {
 func solve1(v interface{}) interface{} {
 	input := func() int {
 		panic("unexpected input call")
-		return 0
 	}
 
 	grid := NewGrid()
