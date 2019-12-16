@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 
@@ -11,10 +12,6 @@ import (
 func main() {
 	solver := common.NewSolver(parse, solve1, solve2)
 	fmt.Println(solver.Solve())
-}
-
-func log(args ...interface{}) {
-	//fmt.Println(args...)
 }
 
 type point struct {
@@ -69,9 +66,9 @@ func solve1(v interface{}) interface{} {
 	}
 
 	max := 0
+	maxp := point{}
 
 	for _, p := range m.points {
-		log("POINT", p)
 		ps := make([]point, len(m.points))
 		copy(ps, m.points)
 
@@ -88,8 +85,6 @@ func solve1(v interface{}) interface{} {
 				continue
 			}
 
-			log("\t", neigh, "IS VISIBLE")
-
 			visible++
 
 			dx, dy := neigh.x-p.x, neigh.y-p.y
@@ -100,60 +95,81 @@ func solve1(v interface{}) interface{} {
 				}
 
 				ddx, ddy := ps[j].x-p.x, ps[j].y-p.y
-				log("\t\t", ps[j], "CHECK", neigh, "dx", dx, "dy", dy, "ddx", ddx, "ddy", ddy)
 
 				if !sign(dx, ddx) {
-					log("\t\t\tNOT SIGN", "dx", dx, "ddx", ddx)
 					continue
 				}
 				if !sign(dy, ddy) {
-					log("\t\t\tNOT SIGN", "dy", dx, "ddy", ddx)
 					continue
 				}
 				if dx == 0 && ddx != 0 || dx != 0 && ddx == 0 {
-					log("\t\t\tNOT ZERO", "dx", dx, "ddx", ddx)
 					continue
 				}
 				if dy == 0 && ddy != 0 || dy != 0 && ddy == 0 {
-					log("\t\t\tNOT ZERO", "dy", dy, "ddy", ddy)
 					continue
 				}
 				if dx == 0 && ddx == 0 {
 					if absi(dy) > absi(ddy) {
-						log("\t\t\t", "dy > ddy", "dy", dy, "ddy", ddy)
 						continue
 					}
-					log("\t\t\t", ps[j], "IS BLOCKED BY DX ZERO", neigh, "dx", dx, "dy", dy, "ddx", ddx, "ddy")
 					blocked[ps[j]] = true
 					continue
 				}
 				if dy == 0 && ddy == 0 {
 					if absi(dx) > absi(ddx) {
-						log("\t\t\t", "dx > ddx", "dx", dx, "ddx", ddx)
 						continue
 					}
-					log("\t\t\t", ps[j], "IS BLOCKED BY DY ZERO", neigh, "dx", dx, "dy", dy, "ddx", ddx, "ddy", ddy)
 					blocked[ps[j]] = true
 					continue
 				}
 				if dx != 0 && dy != 0 && dy*ddx != dx*ddy {
 					continue
 				}
-				log("\t\t\t", ps[j], "IS BLOCKED BY", neigh, "dx", dx, "dy", dy, "ddx", ddx, "ddy", ddy, "ddx/dx", ddx/dx, "ddy/dy", ddy/dy)
 				blocked[ps[j]] = true
 			}
 		}
 
-		log("VISIBLE", visible)
-
 		if visible > max {
 			max = visible
+			maxp = p
 		}
 	}
+
+	fmt.Println(maxp)
 
 	return max
 }
 
 func solve2(v interface{}) interface{} {
+	m := v.(pointsmap)
+
+	sortPoints(m.points, point{x: 17, y: 22})
+
 	return 0
+}
+
+func sortPoints(points []point, p point) {
+	abs := func(p1, p2 point) int {
+		return (p1.x-p2.x)*(p1.x-p2.x) + (p1.y-p2.y)*(p1.y-p2.y)
+	}
+
+	angle := func(p1, p2 point) float64 {
+		x, y := (p2.x - p1.x), (p2.y - p1.y)
+		a := math.Atan2(float64(y), float64(x))*180/math.Pi - 90
+		if x < 0 && a > 0 {
+			a -= 360
+		}
+		return math.Abs(a)
+	}
+
+	sort.Slice(points, func(i, j int) bool {
+		p1, p2 := points[i], points[j]
+
+		a1, a2 := angle(p, p1), angle(p, p2)
+		fmt.Println(p, p1, a1, p2, a2)
+		if a1 != a2 {
+			return a1 < a2
+		}
+		return abs(p, p1) < abs(p, p2)
+	})
 }
