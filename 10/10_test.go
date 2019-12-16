@@ -123,6 +123,7 @@ func TestSortPoints(t *testing.T) {
 			`,
 			from: point{8, 3},
 			want: []point{
+				point{8, 3},
 				point{8, 1},
 				point{9, 0},
 				point{9, 1},
