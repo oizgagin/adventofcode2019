@@ -142,34 +142,78 @@ func solve1(v interface{}) interface{} {
 
 func solve2(v interface{}) interface{} {
 	m := v.(pointsmap)
-
-	sortPoints(m.points, point{x: 17, y: 22})
-
-	return 0
+	points := sortPoints(m.points, point{x: 17, y: 22})
+	return points[200]
 }
 
-func sortPoints(points []point, p point) {
+func sortPoints(points []point, p point) []point {
 	abs := func(p1, p2 point) int {
 		return (p1.x-p2.x)*(p1.x-p2.x) + (p1.y-p2.y)*(p1.y-p2.y)
 	}
 
 	angle := func(p1, p2 point) float64 {
-		x, y := (p2.x - p1.x), (p2.y - p1.y)
-		a := math.Atan2(float64(y), float64(x))*180/math.Pi - 90
-		if x < 0 && a > 0 {
-			a -= 360
+		x, y := (p2.x - p1.x), -(p2.y - p1.y)
+		if x == 0 && y == 0 {
+			return 0
 		}
-		return math.Abs(a)
+		a := math.Abs(math.Atan2(float64(y), float64(x))*180/math.Pi - 90)
+		if x < 0 && y >= 0 {
+			a = 360 - a
+		}
+		return a
 	}
 
-	sort.Slice(points, func(i, j int) bool {
-		p1, p2 := points[i], points[j]
+	groups := make(map[float64][]point)
+	angles := make([]float64, 0, len(points))
 
-		a1, a2 := angle(p, p1), angle(p, p2)
-		fmt.Println(p, p1, a1, p2, a2)
-		if a1 != a2 {
-			return a1 < a2
+	for _, point := range points {
+		a := angle(p, point)
+		groups[a] = append(groups[a], point)
+		angles = append(angles, a)
+	}
+
+	sort.Slice(angles, func(i, j int) bool { return angles[i] < angles[j] })
+
+	set := func(arr []float64) []float64 {
+		seen := make(map[float64]bool)
+
+		var r []float64
+		for _, elem := range arr {
+			if !seen[elem] {
+				r = append(r, elem)
+				seen[elem] = true
+			}
 		}
-		return abs(p, p1) < abs(p, p2)
-	})
+
+		return r
+	}
+
+	angles = set(angles)
+
+	for _, ps := range groups {
+		sort.Slice(ps, func(i, j int) bool { return abs(p, ps[i]) < abs(p, ps[j]) })
+	}
+
+	var result []point
+
+	result = append(result, groups[0][0])
+	groups[0] = groups[0][1:]
+
+	for {
+		for _, a := range angles {
+			if len(groups[a]) == 0 {
+				continue
+			}
+
+			result = append(result, groups[a][0])
+			groups[a] = groups[a][1:]
+			continue
+		}
+
+		if len(result) == len(points) {
+			break
+		}
+	}
+
+	return result
 }

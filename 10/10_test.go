@@ -171,8 +171,8 @@ func TestSortPoints(t *testing.T) {
 		}
 		m := v.(pointsmap)
 
-		sortPoints(m.points, tc.from)
-		if !reflect.DeepEqual(m.points, tc.want) {
+		points := sortPoints(m.points, tc.from)
+		if !reflect.DeepEqual(points, tc.want) {
 			t.Fatalf("got\n\n%#v\nwant\n\n%#v", m.points, tc.want)
 		}
 	}
