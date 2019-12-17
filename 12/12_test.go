@@ -48,7 +48,7 @@ func TestSolve2(t *testing.T) {
 
 	testCases := []struct {
 		coords string
-		want   int
+		want   uint64
 	}{
 		{
 			coords: `

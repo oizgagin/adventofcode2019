@@ -26,10 +26,6 @@ func solve1(v interface{}) interface{} {
 	return system.Energy()
 }
 
-func solve2(v interface{}) interface{} {
-	return 0
-}
-
 func parseCoords(s string) (coords [][3]int) {
 	re := regexp.MustCompile(`\<x\=([^,]+).*?y\=([^,]+).*?z=([^,]+)\>`)
 
@@ -110,4 +106,80 @@ func abs(i int) int {
 		return -i
 	}
 	return i
+}
+
+func solve2(v interface{}) interface{} {
+	coords := v.([][3]int)
+
+	var (
+		xs = make([]int, len(coords))
+		ys = make([]int, len(coords))
+		zs = make([]int, len(coords))
+	)
+
+	for i := 0; i < len(coords); i++ {
+		xs[i], ys[i], zs[i] = coords[i][0], coords[i][1], coords[i][2]
+	}
+
+	xp, yp, zp := period(xs), period(ys), period(zs)
+	return lcm(xp, yp, zp)
+}
+
+func period(coords []int) (n uint64) {
+	orig := make([]int, len(coords))
+	copy(orig, coords)
+
+	sign := func(i int) int {
+		if i < 0 {
+			return -1
+		}
+		if i == 0 {
+			return 0
+		}
+		return 1
+	}
+
+	eqs := func(a, b []int) bool {
+		for i := 0; i < len(a); i++ {
+			if a[i] != b[i] {
+				return false
+			}
+		}
+		return true
+	}
+
+	speeds := make([]int, len(coords))
+	zeroes := make([]int, len(coords))
+
+	n = 1
+	for {
+		for i := 0; i < len(coords); i++ {
+			for j := i + 1; j < len(coords); j++ {
+				speeds[i] += sign(coords[j] - coords[i])
+				speeds[j] += sign(coords[i] - coords[j])
+			}
+		}
+		for i := 0; i < len(coords); i++ {
+			coords[i] += speeds[i]
+		}
+		n++
+		if eqs(coords, orig) && eqs(speeds, zeroes) {
+			return
+		}
+	}
+}
+
+func gcd(a, b uint64) uint64 {
+	for b != 0 {
+		a, b = b, a%b
+	}
+	return a
+}
+
+func lcm(a, b uint64, ints ...uint64) (r uint64) {
+	r = a * b / gcd(a, b)
+	for i := 0; i < len(ints); i++ {
+		r = lcm(r, ints[i])
+	}
+	return
 }
