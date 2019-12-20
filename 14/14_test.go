@@ -1,6 +1,9 @@
 package main
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestSolve1(t *testing.T) {
 
@@ -87,7 +90,8 @@ func TestSolve1(t *testing.T) {
 	}
 
 	for i, tc := range testCases {
-		if got := solve1(parsereactions(tc.reactions)); got != tc.want {
+		v, _ := parse(strings.Split(tc.reactions, "\n"))
+		if got := solve1(v); got != tc.want {
 			t.Fatalf("#%d: got %d, want %d", i, got, tc.want)
 		}
 	}
