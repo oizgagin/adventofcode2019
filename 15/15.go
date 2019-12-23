@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/oizgagin/adventofcode2019/common"
 	"github.com/oizgagin/adventofcode2019/intcode"
@@ -119,6 +120,217 @@ func solve1(v interface{}) interface{} {
 	return min
 }
 
+type Grid map[int]map[int]Status
+
+func NewGrid() Grid {
+	return make(map[int]map[int]Status)
+}
+
+func (grid Grid) ensure(x, y int) {
+	if _, has := grid[x]; !has {
+		grid[x] = make(map[int]Status)
+	}
+}
+
+func (grid Grid) Get(x, y int) Status {
+	grid.ensure(x, y)
+	return grid[x][y]
+}
+
+func (grid Grid) Set(x, y int, status Status) {
+	grid.ensure(x, y)
+	grid[x][y] = status
+}
+
+func (grid Grid) Has(x, y int) bool {
+	if _, has := grid[x]; has {
+		return true
+	}
+	_, has := grid[x][y]
+	return has
+}
+
+func (grid Grid) String() string {
+	minX, maxX, minY, maxY := 0, 0, 0, 0
+	for x, ys := range grid {
+		if x < minX {
+			minX = x
+		}
+		if x > maxX {
+			maxX = x
+		}
+
+		for y := range ys {
+			if y < minY {
+				minY = y
+			}
+			if y > maxY {
+				maxY = y
+			}
+		}
+	}
+
+	var rows []string
+	for y := minY; y <= maxY; y++ {
+		row := ""
+		for x := minX; x <= maxX; x++ {
+			switch grid.Get(x, y) {
+			case Wall:
+				row += "#"
+			case Found:
+				row += "O"
+			case Moved:
+				row += "."
+			}
+		}
+		rows = append(rows, row)
+	}
+	return strings.Join(rows, "\n")
+}
+
 func solve2(v interface{}) interface{} {
-	return 0
+	var currMovement Movement
+
+	input := func() int {
+		return int(currMovement)
+	}
+
+	var currStatus Status
+
+	output := func(v int) {
+		currStatus = Status(v)
+	}
+
+	cpu := intcode.NewCPU(v.(intcode.Memory), input, output)
+
+	currX, currY := 0, 0
+
+	grid := NewGrid()
+	grid.Set(currX, currY, Moved)
+
+	move := func(m Movement) Status {
+		currMovement = m
+		if state := cpu.Exec(); state == intcode.CPUHalt {
+			panic("unexpected halt received")
+		}
+		return currStatus
+	}
+
+	reversed := map[Movement]Movement{
+		South: North,
+		North: South,
+		East:  West,
+		West:  East,
+	}
+
+	var walk func(Movement)
+
+	walk = func(to Movement) {
+		status := move(to)
+
+		if status == Wall {
+			switch to {
+			case North:
+				grid.Set(currX, currY-1, Wall)
+			case South:
+				grid.Set(currX, currY+1, Wall)
+			case West:
+				grid.Set(currX-1, currY, Wall)
+			case East:
+				grid.Set(currX+1, currY, Wall)
+			}
+			return
+		}
+
+		switch currMovement {
+		case North:
+			currY -= 1
+		case South:
+			currY += 1
+		case West:
+			currX -= 1
+		case East:
+			currX += 1
+		}
+
+		fmt.Println("MOVED TO", currMovement, "X", currX, "Y", currY, "STATUS", currStatus)
+		grid.Set(currX, currY, currStatus)
+
+		for _, movement := range []Movement{South, North, West, East} {
+			if movement != reversed[to] {
+				walk(movement)
+			}
+		}
+
+		move(reversed[to])
+	}
+
+	for _, movement := range []Movement{South, North, West, East} {
+		walk(movement)
+	}
+
+	fmt.Println(grid)
+
+	minX, maxX, minY, maxY := 0, 0, 0, 0
+	for x, ys := range grid {
+		if x < minX {
+			minX = x
+		}
+		if x > maxX {
+			maxX = x
+		}
+
+		for y := range ys {
+			if y < minY {
+				minY = y
+			}
+			if y > maxY {
+				maxY = y
+			}
+		}
+	}
+
+	marked := NewGrid()
+
+	hasOxygen := func(x, y int) bool {
+		if grid.Has(x-1, y) && grid.Get(x-1, y) == Found && !marked.Has(x-1, y) {
+			return true
+		}
+		if grid.Has(x+1, y) && grid.Get(x+1, y) == Found && !marked.Has(x+1, y) {
+			return true
+		}
+		if grid.Has(x, y-1) && grid.Get(x, y-1) == Found && !marked.Has(x, y-1) {
+			return true
+		}
+		if grid.Has(x, y+1) && grid.Get(x, y+1) == Found && !marked.Has(x, y+1) {
+			return true
+		}
+		return false
+	}
+
+	minutes := 0
+	for {
+		fmt.Println(grid)
+		fmt.Println("\n\n")
+
+		marked = NewGrid()
+
+		wasSet := false
+		for y := minY; y <= maxY; y++ {
+			for x := minX; x <= maxX; x++ {
+				if grid.Get(x, y) == Moved && hasOxygen(x, y) {
+					wasSet = true
+					marked.Set(x, y, Found)
+					grid.Set(x, y, Found)
+				}
+			}
+		}
+
+		minutes++
+		if !wasSet {
+			break
+		}
+	}
+
+	return minutes
 }
