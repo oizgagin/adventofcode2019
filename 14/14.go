@@ -62,7 +62,10 @@ func parse(lines []string) (interface{}, error) {
 
 func solve1(v interface{}) interface{} {
 	tree := v.(map[ingredient][]ingredient)
+	return countores(tree, 1)
+}
 
+func countores(tree map[ingredient][]ingredient, fuels int) int {
 	free := make(map[string]int)
 
 	ores := 0
@@ -98,11 +101,12 @@ func solve1(v interface{}) interface{} {
 		}
 	}
 
-	visit(1, "FUEL")
+	visit(fuels, "FUEL")
 
 	return ores
 }
 
 func solve2(v interface{}) interface{} {
-	return 0
+	tree := v.(map[ingredient][]ingredient)
+	return countores(tree, 1)
 }
