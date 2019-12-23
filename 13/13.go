@@ -3,9 +3,7 @@ package main
 import (
 	"fmt"
 	"strings"
-	"time"
 
-	"github.com/eiannone/keyboard"
 	"github.com/oizgagin/adventofcode2019/common"
 	"github.com/oizgagin/adventofcode2019/intcode"
 )
@@ -151,6 +149,7 @@ func solve1(v interface{}) interface{} {
 	return blocks
 }
 
+/*
 func solve2(v interface{}) interface{} {
 	keys := make(chan int, 1)
 
@@ -239,6 +238,71 @@ func solve2(v interface{}) interface{} {
 		fmt.Println("SCORE:", score)
 		fmt.Println(grid)
 		time.Sleep(time.Second / 10)
+	}
+
+	return score
+}
+*/
+
+func solve2(v interface{}) interface{} {
+	padX, ballX := 0, 0
+
+	input := func() int {
+		if padX < ballX {
+			return 1
+		}
+		if padX > ballX {
+			return -1
+		}
+		return 0
+	}
+
+	//grid := NewGrid()
+
+	score := 0
+
+	output := func() func(int) {
+		x, y := 0, 0
+
+		setX := func(v int) { x = v }
+		setY := func(v int) { y = v }
+		setTile := func(v int) {
+			if x == -1 && y == 0 {
+				score = v
+				return
+			}
+			if Tile(v) == BallTile {
+				ballX = x
+			}
+			if Tile(v) == HorizontalTile {
+				padX = x
+			}
+		}
+
+		calls := 0
+
+		return func(v int) {
+			switch calls % 3 {
+			case 0:
+				setX(v)
+			case 1:
+				setY(v)
+			case 2:
+				setTile(v)
+			}
+			calls++
+		}
+	}()
+
+	mem := v.(intcode.Memory)
+	mem.Set(0, 2)
+
+	cpu := intcode.NewCPU(mem, input, output)
+	for {
+		state := cpu.Exec()
+		if state == intcode.CPUHalt {
+			break
+		}
 	}
 
 	return score
