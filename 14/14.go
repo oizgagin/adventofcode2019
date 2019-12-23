@@ -81,6 +81,7 @@ func solve1(v interface{}) interface{} {
 		}
 
 		need -= free[id]
+		free[id] = 0
 
 		for from, tos := range tree {
 			if from.id == id {
