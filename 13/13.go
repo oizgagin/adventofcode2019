@@ -175,7 +175,10 @@ func solve2(v interface{}) interface{} {
 		}
 	}()
 
+	calledInput := false
+
 	input := func() int {
+		calledInput = true
 		select {
 		case key := <-keys:
 			return key
@@ -229,9 +232,13 @@ func solve2(v interface{}) interface{} {
 		if state == intcode.CPUHalt {
 			break
 		}
+		if !calledInput {
+			continue
+		}
 		clean()
+		fmt.Println("SCORE:", score)
 		fmt.Println(grid)
-		time.Sleep(time.Second / 60)
+		time.Sleep(time.Second / 10)
 	}
 
 	return score
