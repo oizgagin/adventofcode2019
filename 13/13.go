@@ -2,7 +2,10 @@ package main
 
 import (
 	"fmt"
+	"strings"
+	"time"
 
+	"github.com/eiannone/keyboard"
 	"github.com/oizgagin/adventofcode2019/common"
 	"github.com/oizgagin/adventofcode2019/intcode"
 )
@@ -29,6 +32,23 @@ const (
 	BallTile       Tile = 4
 )
 
+func (tile Tile) String() string {
+	switch tile {
+	case EmptyTile:
+		return " "
+	case WallTile:
+		return "W"
+	case BlockTile:
+		return "B"
+	case HorizontalTile:
+		return "="
+	case BallTile:
+		return "o"
+	default:
+		return "?"
+	}
+}
+
 type Grid map[int]map[int]Tile
 
 func NewGrid() Grid {
@@ -49,6 +69,37 @@ func (grid Grid) Get(x, y int) Tile {
 func (grid Grid) Set(x, y int, tile Tile) {
 	grid.ensure(x, y)
 	grid[x][y] = tile
+}
+
+func (grid Grid) String() string {
+	minX, maxX, minY, maxY := 0, 0, 0, 0
+	for x, ys := range grid {
+		if x < minX {
+			minX = x
+		}
+		if x > maxX {
+			maxX = x
+		}
+
+		for y := range ys {
+			if y < minY {
+				minY = y
+			}
+			if y > maxY {
+				maxY = y
+			}
+		}
+	}
+
+	var rows []string
+	for y := minY; y <= maxY; y++ {
+		row := ""
+		for x := minX; x <= maxX; x++ {
+			row += grid.Get(x, y).String()
+		}
+		rows = append(rows, row)
+	}
+	return strings.Join(rows, "\n")
 }
 
 func solve1(v interface{}) interface{} {
@@ -101,5 +152,87 @@ func solve1(v interface{}) interface{} {
 }
 
 func solve2(v interface{}) interface{} {
-	return 0
+	keys := make(chan int, 1)
+
+	go func() {
+		err := keyboard.Open()
+		if err != nil {
+			panic(err)
+		}
+		defer keyboard.Close()
+
+		for {
+			_, key, err := keyboard.GetKey()
+			if err != nil {
+				panic(err)
+			}
+			switch key {
+			case keyboard.KeyArrowLeft:
+				keys <- -1
+			case keyboard.KeyArrowRight:
+				keys <- 1
+			}
+		}
+	}()
+
+	input := func() int {
+		select {
+		case key := <-keys:
+			return key
+		default:
+			return 0
+		}
+	}
+
+	grid := NewGrid()
+
+	score := 0
+
+	output := func() func(int) {
+		x, y := 0, 0
+
+		setX := func(v int) { x = v }
+		setY := func(v int) { y = v }
+		setTile := func(v int) {
+			if x == -1 && y == 0 {
+				score = v
+			} else {
+				grid.Set(x, y, Tile(v))
+			}
+		}
+
+		calls := 0
+
+		return func(v int) {
+			switch calls % 3 {
+			case 0:
+				setX(v)
+			case 1:
+				setY(v)
+			case 2:
+				setTile(v)
+			}
+			calls++
+		}
+	}()
+
+	clean := func() {
+		fmt.Println("\033[2J")
+	}
+
+	mem := v.(intcode.Memory)
+	mem.Set(0, 2)
+
+	cpu := intcode.NewCPU(mem, input, output)
+	for {
+		state := cpu.Exec()
+		if state == intcode.CPUHalt {
+			break
+		}
+		clean()
+		fmt.Println(grid)
+		time.Sleep(time.Second / 60)
+	}
+
+	return score
 }
