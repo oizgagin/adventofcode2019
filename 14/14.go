@@ -14,7 +14,7 @@ func main() {
 }
 
 type ingredient struct {
-	amount int
+	amount uint64
 	id     string
 }
 
@@ -36,7 +36,7 @@ func parse(lines []string) (interface{}, error) {
 
 	parseIng := func(s string) ingredient {
 		return ingredient{
-			amount: atoi(trim(split(trim(s), " ")[0])),
+			amount: uint64(atoi(trim(split(trim(s), " ")[0]))),
 			id:     trim(split(trim(s), " ")[1]),
 		}
 	}
@@ -62,17 +62,17 @@ func parse(lines []string) (interface{}, error) {
 
 func solve1(v interface{}) interface{} {
 	tree := v.(map[ingredient][]ingredient)
-	return countores(tree, 1)
+	return int(countores(tree, 1))
 }
 
-func countores(tree map[ingredient][]ingredient, fuels int) int {
-	free := make(map[string]int)
+func countores(tree map[ingredient][]ingredient, fuels uint64) uint64 {
+	free := make(map[string]uint64)
 
-	ores := 0
+	var ores uint64
 
-	var visit func(int, string)
+	var visit func(uint64, string)
 
-	visit = func(need int, id string) {
+	visit = func(need uint64, id string) {
 		if id == "ORE" {
 			ores += need
 			return
@@ -108,5 +108,15 @@ func countores(tree map[ingredient][]ingredient, fuels int) int {
 
 func solve2(v interface{}) interface{} {
 	tree := v.(map[ingredient][]ingredient)
-	return countores(tree, 1)
+
+	maxOres := uint64(1000000000000)
+
+	fuels := 1
+	for {
+		if ores := countores(tree, 1); ores >= maxOres {
+			break
+		}
+		fuels++
+	}
+	return fuels
 }
