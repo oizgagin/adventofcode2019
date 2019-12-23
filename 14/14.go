@@ -110,13 +110,17 @@ func solve2(v interface{}) interface{} {
 	tree := v.(map[ingredient][]ingredient)
 
 	maxOres := uint64(1000000000000)
+	orePerFuel := countores(tree, 1)
 
-	fuels := 1
-	for {
-		if ores := countores(tree, 1); ores >= maxOres {
-			break
+	min, max := maxOres/orePerFuel, 2*maxOres/orePerFuel
+
+	for min != max-1 {
+		m := (max + min) / 2
+		if ores := countores(tree, m); ores >= maxOres {
+			max = m
+		} else {
+			min = m
 		}
-		fuels++
 	}
-	return fuels
+	return int(min)
 }
