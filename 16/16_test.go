@@ -35,12 +35,10 @@ func TestPhases(t *testing.T) {
 	}
 
 	for i, tc := range testCases {
-
 		input := tc.input
 		for i := 0; i < tc.phases; i++ {
 			input = phase(input)
 		}
-
 		if got, want := input[:8], tc.want; !reflect.DeepEqual(got, want) {
 			t.Fatalf("#%d: got %v, want %v", i, got, want)
 		}

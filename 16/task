@@ -69,5 +69,3 @@ Here are the first eight digits of the final output list after 100 phases for so
     69317163492948606335995924319873 becomes 52432133.
 
 After 100 phases of FFT, what are the first eight digits in the final output list?
-
-To begin, get your puzzle input.
