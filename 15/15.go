@@ -42,9 +42,10 @@ func (movement Movement) String() string {
 type Status int
 
 const (
-	Wall  Status = 0
-	Moved Status = 1
-	Found Status = 2
+	Unknown Status = -1
+	Wall    Status = 0
+	Moved   Status = 1
+	Found   Status = 2
 )
 
 func (status Status) String() string {
@@ -134,7 +135,10 @@ func (grid Grid) ensure(x, y int) {
 
 func (grid Grid) Get(x, y int) Status {
 	grid.ensure(x, y)
-	return grid[x][y]
+	if status, has := grid[x][y]; has {
+		return status
+	}
+	return Unknown
 }
 
 func (grid Grid) Set(x, y int, status Status) {
@@ -175,12 +179,16 @@ func (grid Grid) String() string {
 		row := ""
 		for x := minX; x <= maxX; x++ {
 			switch grid.Get(x, y) {
+			case Unknown:
+				row += " "
 			case Wall:
 				row += "#"
-			case Found:
-				row += "O"
 			case Moved:
 				row += "."
+			case Found:
+				row += "O"
+			default:
+				row += "O"
 			}
 		}
 		rows = append(rows, row)
@@ -242,7 +250,7 @@ func solve2(v interface{}) interface{} {
 			return
 		}
 
-		switch currMovement {
+		switch to {
 		case North:
 			currY -= 1
 		case South:
@@ -253,7 +261,7 @@ func solve2(v interface{}) interface{} {
 			currX += 1
 		}
 
-		fmt.Println("MOVED TO", currMovement, "X", currX, "Y", currY, "STATUS", currStatus)
+		fmt.Println("MOVED TO", to, "X", currX, "Y", currY, "STATUS", currStatus)
 		grid.Set(currX, currY, currStatus)
 
 		for _, movement := range []Movement{South, North, West, East} {
@@ -263,6 +271,16 @@ func solve2(v interface{}) interface{} {
 		}
 
 		move(reversed[to])
+		switch reversed[to] {
+		case North:
+			currY -= 1
+		case South:
+			currY += 1
+		case West:
+			currX -= 1
+		case East:
+			currX += 1
+		}
 	}
 
 	for _, movement := range []Movement{South, North, West, East} {
@@ -290,22 +308,12 @@ func solve2(v interface{}) interface{} {
 		}
 	}
 
-	marked := NewGrid()
-
-	hasOxygen := func(x, y int) bool {
-		if grid.Has(x-1, y) && grid.Get(x-1, y) == Found && !marked.Has(x-1, y) {
-			return true
+	hasOxygen := func(x, y, minutes int) bool {
+		isOxy := func(x1, y1 int) bool {
+			s := grid.Get(x1, y1)
+			return int(Found) <= int(s) && int(s) < int(Found)+minutes+1
 		}
-		if grid.Has(x+1, y) && grid.Get(x+1, y) == Found && !marked.Has(x+1, y) {
-			return true
-		}
-		if grid.Has(x, y-1) && grid.Get(x, y-1) == Found && !marked.Has(x, y-1) {
-			return true
-		}
-		if grid.Has(x, y+1) && grid.Get(x, y+1) == Found && !marked.Has(x, y+1) {
-			return true
-		}
-		return false
+		return isOxy(x-1, y) || isOxy(x+1, y) || isOxy(x, y-1) || isOxy(x, y+1)
 	}
 
 	minutes := 0
@@ -313,23 +321,21 @@ func solve2(v interface{}) interface{} {
 		fmt.Println(grid)
 		fmt.Println("\n\n")
 
-		marked = NewGrid()
-
 		wasSet := false
 		for y := minY; y <= maxY; y++ {
 			for x := minX; x <= maxX; x++ {
-				if grid.Get(x, y) == Moved && hasOxygen(x, y) {
+				if grid.Get(x, y) == Moved && hasOxygen(x, y, minutes) {
 					wasSet = true
-					marked.Set(x, y, Found)
-					grid.Set(x, y, Found)
+					grid.Set(x, y, Status(int(Found)+minutes+1))
 				}
 			}
 		}
 
-		minutes++
 		if !wasSet {
 			break
 		}
+
+		minutes++
 	}
 
 	return minutes
