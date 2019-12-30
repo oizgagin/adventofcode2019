@@ -31,7 +31,30 @@ func solve1(v interface{}) interface{} {
 }
 
 func solve2(v interface{}) interface{} {
-	return 0
+	vs := v.([]int)
+
+	input := make([]int, len(vs)*10000)
+	for i := 0; i < 10000; i++ {
+		for j := 0; j < len(vs); j++ {
+			input[i*len(vs)+j] = vs[j]
+		}
+	}
+	for i := 0; i < 100; i++ {
+		fmt.Println("PHASE", i)
+		input = phase(input)
+	}
+
+	offset := arr2num(vs[:8])
+	return input[offset : offset+8]
+}
+
+func arr2num(a []int) (res int) {
+	mul := 1
+	for i := len(a) - 1; i >= 0; i-- {
+		res += a[i] * mul
+		mul *= 10
+	}
+	return
 }
 
 func phase(vs []int) []int {
