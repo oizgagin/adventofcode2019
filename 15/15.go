@@ -261,7 +261,6 @@ func solve2(v interface{}) interface{} {
 			currX += 1
 		}
 
-		fmt.Println("MOVED TO", to, "X", currX, "Y", currY, "STATUS", currStatus)
 		grid.Set(currX, currY, currStatus)
 
 		for _, movement := range []Movement{South, North, West, East} {
@@ -286,8 +285,6 @@ func solve2(v interface{}) interface{} {
 	for _, movement := range []Movement{South, North, West, East} {
 		walk(movement)
 	}
-
-	fmt.Println(grid)
 
 	minX, maxX, minY, maxY := 0, 0, 0, 0
 	for x, ys := range grid {
@@ -318,9 +315,6 @@ func solve2(v interface{}) interface{} {
 
 	minutes := 0
 	for {
-		fmt.Println(grid)
-		fmt.Println("\n\n")
-
 		wasSet := false
 		for y := minY; y <= maxY; y++ {
 			for x := minX; x <= maxX; x++ {
