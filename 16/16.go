@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/oizgagin/adventofcode2019/common"
 )
@@ -12,11 +13,21 @@ func main() {
 }
 
 func parse(lines []string) (interface{}, error) {
-	return nil, nil
+	line := strings.TrimSpace(lines[0])
+
+	res := make([]int, len(line))
+	for i := 0; i < len(line); i++ {
+		res[i] = int(line[i] - '0')
+	}
+	return res, nil
 }
 
 func solve1(v interface{}) interface{} {
-	return 0
+	input := v.([]int)
+	for i := 0; i < 100; i++ {
+		input = phase(input)
+	}
+	return input[:8]
 }
 
 func solve2(v interface{}) interface{} {
@@ -34,17 +45,19 @@ func phase(vs []int) []int {
 func calc(pos int, vs []int) int {
 	sum := 0
 	for i := 0; i < len(vs); i++ {
-		sum += digit(pos, i, vs[i])
+		sum += next(pos, i, vs[i])
 	}
 	return ones(sum)
 }
 
-func digit(pos, i, elem int) int {
+func next(pos, i, elem int) int {
 	return elem * pattern(pos, i)
 }
 
+var pat = []int{0, 1, 0, -1}
+
 func pattern(pos, i int) int {
-	return 0
+	return pat[((i+1)/(pos+1))%4]
 }
 
 func ones(x int) int {
