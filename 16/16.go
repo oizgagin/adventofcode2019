@@ -14,7 +14,6 @@ func main() {
 
 func parse(lines []string) (interface{}, error) {
 	line := strings.TrimSpace(lines[0])
-
 	res := make([]int, len(line))
 	for i := 0; i < len(line); i++ {
 		res[i] = int(line[i] - '0')

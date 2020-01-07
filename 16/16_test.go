@@ -50,25 +50,25 @@ func TestSolve2(t *testing.T) {
 
 	testCases := []struct {
 		input string
-		want  string
+		want  []int
 	}{
 		{
 			input: "03036732577212944063491565474664",
-			want:  "84462026",
+			want:  []int{8, 4, 4, 6, 2, 0, 2, 6},
 		},
 		{
 			input: "02935109699940807407585447034323",
-			want:  "78725270",
+			want:  []int{7, 8, 7, 2, 5, 2, 7, 0},
 		},
 		{
 			input: "03081770884921959731165446850517",
-			want:  "53553731",
+			want:  []int{5, 3, 5, 5, 3, 7, 3, 1},
 		},
 	}
 
 	for i, tc := range testCases {
 		input, _ := parse([]string{tc.input})
-		if got, want := solve2(input), tc.want; got != want {
+		if got, want := solve2(input), tc.want; !reflect.DeepEqual(got, want) {
 			t.Fatalf("#%d: got %v, want %v", i, got, want)
 		}
 	}
